@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:components="com.components.*"
+			   xmlns:flexlib="http://code.google.com/p/flexlib/"
+			   initialize="init()"
+			   >
+	<s:layout>
+		<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+	</s:layout>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.classes.Add_HPC_ButtonClick;
+			import com.classes.HPC;
+			import com.classes.Jobs;
+			import com.components.HPC_Button;
+			
+			import flash.events.KeyboardEvent;
+			import flash.globalization.DateTimeStyle;
+			
+			import flashx.textLayout.formats.Float;
+			
+			import mx.binding.utils.BindingUtils;
+			import mx.charts.chartClasses.BoundedValue;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.TextArea;
+			import mx.events.FlexEvent;
+			import mx.formatters.DateFormatter;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.OnDemandEventDispatcher;
+			
+			import spark.formatters.DateTimeFormatter;
+			
+			public var hpc_list:ArrayCollection;
+			public var jobs_list:ArrayCollection;
+			public var button_list:ArrayCollection = new ArrayCollection;
+			public var total:HPC;
+			
+			[Bindable]
+			private var scaleX_real:Number;
+			[Bindable]
+			private var scaleY_real:Number;
+			
+			public var timerOfRandom:Timer;
+			public var timerOfRefresh:Timer;
+			public var timerOfStageChange:Timer;
+			private var n:int;   //随机数，用于决定乱序弹出的HPC
+			private var stage_width:int;
+			private var stage_height:int;
+			private var real_width:int;
+			private var real_height:int;
+			private var model:XML = new XML();
+			private static var obj_list:ArrayCollection = new ArrayCollection;
+			private static var rate:Number=1;
+			private static var REFRESHTIME:Number;
+			private var moreJobInfor:String;
+			
+			public var flag:int=0;
+			
+			public function init():void{
+				
+				var url:URLRequest = new URLRequest("conf/Node.xml");  
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE,handleCompleted);	
+				loader.load(url);
+				timerOfRandom = new Timer(2000);
+				timerOfRandom.addEventListener(TimerEvent.TIMER,ontime);
+				timerOfRandom.start();
+				timerOfStageChange = new Timer(500);
+				timerOfStageChange.addEventListener(TimerEvent.TIMER,change);
+				timerOfStageChange.start();
+				serv.set_hpc();		
+				serv.set_jobs();
+				serv.set_time();
+				serv.addEventListener(ResultEvent.RESULT,sethpc_resultHandler);
+				serv.addEventListener(ResultEvent.RESULT,setjobs_resultHandler);
+				serv.addEventListener(ResultEvent.RESULT,settime_resultHandler);
+				serv.addEventListener(ResultEvent.RESULT,update_resultHandler);
+				flowWin.f();
+//				flowWin.addEventListener(MouseEvent.MOUSE_DOWN,startDragging);
+//				flowWin.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+//				hpc_StackedColumnChart.addEventListener(MouseEvent.MOUSE_DOWN,startDragging);
+//				hpc_StackedColumnChart.addEventListener(MouseEvent.MOUSE_UP,stopDragging);				
+				
+				if(this.screen.width/950 > this.screen.height/730){
+					rate = this.screen.height/730;
+				}else{
+					rate = this.screen.width/950;
+				}
+				
+				HPC_Details.scaleX = 1.2;
+				HPC_Details.scaleY = 1.2;
+				BC.scaleX = rate;
+				BC.scaleY = rate;			
+
+			}
+			
+			private function handleCompleted(event:Event):void
+			{
+				var loader:URLLoader = URLLoader(event.target);
+				model = XML(loader.data);
+				for(var i:int=0; i<model.node.length(); i++){					
+					var hpc:Object = model.node[i];
+					var hpcButton:HPC_Button = new HPC_Button();
+					hpcButton.id = "HPC_button_"+hpc.nodeName;
+					hpcButton.nodeName = hpc.nodeName;
+					hpcButton.name = hpc.name;
+					hpcButton.companyName = hpc.companyName;
+					hpcButton.picture = hpc.picture;
+					hpcButton.x = hpc.xPoint;
+					hpcButton.y = hpc.yPoint;
+					hpcButton.introductionURL = hpc.introductionURL;
+					hpcButton.runTimeURL = hpc.runTimeURL;
+					hpcButton.statisticURL = hpc.statisticURL;
+					hpcButton.buttonMode=true; 
+					hpcButton.enabled=true;
+					var x:Add_HPC_ButtonClick = new Add_HPC_ButtonClick(hpcButton,this,timerOfRandom);
+					BC.addElement(hpcButton);
+					button_list.addItem(hpcButton);
+				}
+				REFRESHTIME = (model.refreshTime*60*1000).valueOf();
+				timerOfRefresh = new Timer(REFRESHTIME);
+				timerOfRefresh.addEventListener(TimerEvent.TIMER,refresh);
+				timerOfRefresh.start();
+				moreJobInfor = (model.moreJobInfor).valueOf();
+				hpc_StackedColumnChart.set_amGraph(button_list, this, timerOfRandom);
+				BC.setElementIndex(flowWin,BC.numElements-1);
+				BC.setElementIndex(hpc_StackedColumnChart,BC.numElements-2);
+				BC.setElementIndex(HPC_Details,BC.numElements-3);
+			}
+			
+			private function sethpc_resultHandler(event:ResultEvent):void
+			{
+				hpc_list = ArrayCollection(event.result);
+				total = HPC(hpc_list.getItemAt(hpc_list.length-1));
+				hpc_list.removeItemAt(hpc_list.length-1);
+				hpc_StackedColumnChart.set(hpc_list, total);
+			}
+			
+			private function setjobs_resultHandler(event:ResultEvent):void
+			{
+				jobs_list = ArrayCollection(event.result);
+				if(flowWin.dp.length>0){
+					flowWin.dp.removeAll();
+					obj_list.removeAll();
+				}
+				for(var i:int=0; i<jobs_list.length; i++){
+					var obj:Object = new Object();
+					obj["User"] = jobs_list.getItemAt(i).user;
+					if(jobs_list.getItemAt(i).hpc.length>6){
+						obj["Hpc"] = jobs_list.getItemAt(i).hpc.substr(0,6)+"*";
+					}else{
+						obj["Hpc"] = jobs_list.getItemAt(i).hpc;
+					}
+					obj["Core"] = jobs_list.getItemAt(i).core;
+					if(jobs_list.getItemAt(i).status == 16){
+						obj["Status"] = "PEND";
+					}else{
+						obj["Status"] = "RUN";
+					}
+					var timedata:Number=jobs_list.getItemAt(i).updateTime;
+					var thisdata:Date=new Date(timedata*1000);
+					var df:DateFormatter = new DateFormatter();
+					df.formatString = "MM-DD HH:NN";
+					var year:Number=thisdata.fullYear;
+					var month:Number=thisdata.month+1;
+					var day:Number=thisdata.date;
+					var hour:Number=thisdata.hours;
+					var minutes:Number=thisdata.minutes;
+					obj["updateTime"] = df.format(thisdata).toString();
+					flowWin.dp.addItem(obj);
+					obj_list.addItem(obj);
+				}
+			}
+			
+			protected function settime_resultHandler(event:ResultEvent):void
+			{
+				time.text = "更新时间：" + event.result.toString();
+			}			
+			
+			private function update_resultHandler(event:ResultEvent):void
+			{
+				serv.set_hpc();
+				serv.set_jobs();
+				serv.set_time();
+				if(!timerOfRandom.running){
+					timerOfRandom.start();
+				}
+			}
+			
+			private function ontime(evt:TimerEvent):void{
+				n = (Math.random()*100)%(hpc_list.length);
+				shwo_details_random(HPC(hpc_list.getItemAt(n)));				
+			}
+			
+			private function refresh(evt:TimerEvent):void
+			{
+				serv.set_hpc();
+				serv.set_jobs();
+				serv.set_time();
+				if(!timerOfRandom.running){
+					timerOfRandom.start();
+				}
+			}
+			
+			private function change(evt:TimerEvent):void{
+				if(this.screen.width/950 > this.screen.height/730){
+					rate = this.screen.height/730;
+				}else{
+					rate = this.screen.width/950;
+				}
+				
+				HPC_Details.scaleX = 1.2;
+				HPC_Details.scaleY = 1.2;
+				BC.scaleX = rate;
+				BC.scaleY = rate;			
+			}
+			
+			public function shwo_details_random(hpc:HPC):void{
+				for each(var hpc_button:HPC_Button in button_list){
+					if(hpc_button.nodeName == hpc.nodeName){
+						if(hpc.nodeName != "kib"){
+							HPC_Details.x = hpc_button.x - HPC_Details.width-30;
+							HPC_Details.y = hpc_button.y - HPC_Details.height-20;
+						}else{
+							HPC_Details.x = hpc_button.x - HPC_Details.width/2;
+							HPC_Details.y = hpc_button.y - HPC_Details.height-20;
+						}
+						if(flag==1){
+							HPC_Details.removeURL();
+						}else{
+							flag=1;
+						}
+						HPC_Details.picture = hpc_button.picture;
+						HPC_Details.textOutput.text = hpc.nodeName;
+						HPC_Details.setURL(hpc_button.introductionURL, hpc_button.runTimeURL, hpc_button.statisticURL);
+						HPC_Details.textOutput0.text = "运行" + hpc.runJob + "个/" + hpc.runCore + "核";
+						HPC_Details.textOutput1.text = "排队" + hpc.pendJob + "个/" + hpc.pendCore +"核";
+						HPC_Details.image_name.text = hpc_button.name;
+						HPC_Details.visible = true;
+						hpc_StackedColumnChart.set_NodeName(hpc.nodeName, hpc_button.companyName);
+						hpc_StackedColumnChart.set_HightLight(hpc.nodeName);
+						return;
+					}
+				}				
+			}
+			public function shwo_details_click(hpc_button:HPC_Button):void{
+				for each(var hpc:HPC in hpc_list){	
+					if(hpc_button.nodeName == hpc.nodeName){
+						if(hpc.nodeName != "kib"){
+							HPC_Details.x = hpc_button.x - HPC_Details.width-30;
+							HPC_Details.y = hpc_button.y - HPC_Details.height-20;
+						}else{
+							HPC_Details.x = hpc_button.x- HPC_Details.width/2;
+							HPC_Details.y = hpc_button.y - HPC_Details.height-20;
+						}
+						if(flag==1){
+							HPC_Details.removeURL();
+						}else{
+							flag=1;
+						}
+						HPC_Details.picture = hpc_button.picture;
+						HPC_Details.textOutput.text = hpc.nodeName;
+						HPC_Details.textOutput0.text = "运行" + hpc.runJob + "个/" + hpc.runCore + "核";
+						HPC_Details.textOutput1.text = "排队" + hpc.pendJob + "个/" + hpc.pendCore +"核";
+						HPC_Details.image_name.text = hpc_button.name;
+						HPC_Details.setURL(hpc_button.introductionURL, hpc_button.runTimeURL, hpc_button.statisticURL);
+						HPC_Details.visible = true;
+						hpc_StackedColumnChart.set_NodeName(hpc.nodeName, hpc_button.companyName);
+						hpc_StackedColumnChart.set_HightLight(hpc.nodeName);
+						if(flowWin.dp.length>0){
+							flowWin.dp.removeAll();
+						}
+						for(var i:int=0; i<jobs_list.length; i++){
+							var obj:Object = new Object();
+							if(jobs_list.getItemAt(i).hpc == hpc_button.nodeName){
+								obj["User"] = jobs_list.getItemAt(i).user;
+								if(jobs_list.getItemAt(i).hpc.length>6){
+									obj["Hpc"] = jobs_list.getItemAt(i).hpc.substr(0,6)+"*";
+								}else{
+									obj["Hpc"] = jobs_list.getItemAt(i).hpc;
+								}
+								obj["Core"] = jobs_list.getItemAt(i).core;
+								if(jobs_list.getItemAt(i).status == 16){
+									obj["Status"] = "PEND";
+								}else{
+									obj["Status"] = "RUN";
+								}
+								var timedata:Number=jobs_list.getItemAt(i).updateTime;
+								var thisdata:Date=new Date(timedata*1000);
+								var df:DateFormatter = new DateFormatter();
+								df.formatString = "MM-DD HH:NN";
+								var year:Number=thisdata.fullYear;
+								var month:Number=thisdata.month+1;
+								var day:Number=thisdata.date;
+								var hour:Number=thisdata.hours;
+								var minutes:Number=thisdata.minutes;
+								obj["updateTime"] = df.format(thisdata).toString();
+								flowWin.dp.addItem(obj);								
+							}
+						}
+						return;
+					}
+				}
+				var hpc_0:HPC = new HPC();
+				if(flowWin.dp.length>0){
+					flowWin.dp.removeAll();
+				}
+				hpc_0.nodeName = hpc_button.nodeName;
+				if(hpc_button.nodeName != "kib"){
+					HPC_Details.x = hpc_button.x - 218;
+					HPC_Details.y = hpc_button.y - 136;
+				}else{
+					HPC_Details.x = hpc_button.x-100;
+					HPC_Details.y = hpc_button.y - 136;
+				}
+				if(flag==1){
+					HPC_Details.removeURL();
+				}else{
+					flag=1;
+				}
+				HPC_Details.picture =hpc_button.picture;
+				HPC_Details.textOutput.text = hpc_0.nodeName;
+				HPC_Details.textOutput0.text = "运行0个/0核";
+				HPC_Details.textOutput1.text = "排队0个/0核";
+				HPC_Details.image_name.text = hpc_button.name;
+				HPC_Details.setURL(hpc_button.introductionURL, hpc_button.runTimeURL, hpc_button.statisticURL);
+				HPC_Details.visible = true;				
+				hpc_StackedColumnChart.set_NodeName(hpc_0.nodeName, hpc_button.companyName);
+				hpc_StackedColumnChart.set_HightLight(hpc_0.nodeName);
+			}
+			
+			
+			
+			protected function update_clickHandler(event:MouseEvent):void
+			{
+				serv.update();		
+			}
+			
+			protected function HPC_Details_rollOverHandler(event:MouseEvent):void
+			{
+				if(timerOfRandom.running){
+					timerOfRandom.stop();
+				}
+			}
+			
+			protected function HPC_Details_rollOutHandler(event:MouseEvent):void
+			{
+				if(!timerOfRandom.running){
+					timerOfRandom.start();
+					if(flowWin.dp.length>0){
+						flowWin.dp.removeAll();
+					}
+					flowWin.dp.addAll(obj_list);
+				}
+			}
+			
+			protected function hpc_StackedColumnChart_mouseOverHandler(event:MouseEvent):void
+			{
+				if(timerOfRandom.running){
+					timerOfRandom.stop();
+				}
+			}
+			
+			protected function hpc_StackedColumnChart_mouseOutHandler(event:MouseEvent):void
+			{
+				if(!timerOfRandom.running){
+					timerOfRandom.start();
+					if(flowWin.dp.length>0){
+						flowWin.dp.removeAll();
+					}
+					flowWin.dp.addAll(obj_list);
+				}
+			}		
+			
+			protected function flowWin_mouseWheelHandler(event:MouseEvent):void
+			{
+				if(flowWin.scaleX<2 || event.delta<0){
+					flowWin.scaleX = flowWin.scaleX + event.delta/20;
+					flowWin.scaleY = flowWin.scaleY + event.delta/20;
+				}				
+			}
+			
+			protected function hpc_StackedColumnChart_mouseWheelHandler(event:MouseEvent):void
+			{
+				if(hpc_StackedColumnChart.scaleX<2 || event.delta<0){
+					hpc_StackedColumnChart.scaleX = hpc_StackedColumnChart.scaleX + event.delta/20;
+					hpc_StackedColumnChart.scaleY = hpc_StackedColumnChart.scaleY + event.delta/20;
+				}
+			}
+			
+						
+			// 按下鼠标按键时会调用此函数。实现浮窗拖动功能
+//			private function startDragging(e:MouseEvent):void
+//			{
+//				if(timerOfRandom.running){
+//					timerOfRandom.stop();
+//				}
+//				e.currentTarget.startDrag();
+//			}
+//			// 松开鼠标按键时会调用此函数。放置浮窗
+//			private function stopDragging(e:MouseEvent):void
+//			{  
+//				e.currentTarget.stopDrag();
+//				if(!timerOfRandom.running){
+//					timerOfRandom.start();
+//				}
+//			}
+			
+			
+			protected function BC_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(!timerOfRandom.running){
+					timerOfRandom.start();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->	
+		<!-- flex与普通java类的方法通信 -->
+		<s:RemoteObject id="serv" destination="myservice" showBusyCursor="true">
+			<s:method name="set_hpc" result="sethpc_resultHandler(event)"/>
+			<s:method name="set_jobs" result="setjobs_resultHandler(event)"/>	
+			<s:method name="set_time" result="settime_resultHandler(event)"/>	
+			<s:method name="update" result="update_resultHandler(event)"/>
+		</s:RemoteObject>		
+	</fx:Declarations>
+	<s:BorderContainer id="BC" x="0" y="0" width="940" height="723" borderAlpha="0" 
+					   backgroundImage="@Embed('assets/1600万政区版(南海诸岛)_report副本.jpg')"
+					   click="BC_clickHandler(event)">
+		<!--  -->
+		<s:Label id="time" x="253" y="239" top="20" left="40" fontSize="16"/>		
+		<!--  -->
+		
+		<s:Button id="update" x="270" top="16" label="刷   新" chromeColor="#70B2EE" 
+				  useHandCursor="true" buttonMode="true" 
+				  click="update_clickHandler(event)"/>
+		<!--  -->
+		
+		<components:HPC_Details_BC id="HPC_Details" visible="false" x="287" y="243" width="188" height="116" 
+								   backgroundAlpha="0.48" backgroundColor="#FAFDFB"
+								   borderAlpha="0.37" borderVisible="true" 
+								   rollOver="HPC_Details_rollOverHandler(event)"
+								   rollOut="HPC_Details_rollOutHandler(event)">
+		</components:HPC_Details_BC>
+		
+		<!--   -->
+		
+		<components:flowWindow id="flowWin" width="262" height="320" right="0" bottom="0" 
+							   mouseWheel="flowWin_mouseWheelHandler(event)">
+		</components:flowWindow>
+		
+		<components:stackedColumnChartV4 id="hpc_StackedColumnChart" left="-30" bottom="0" width="340" height="240" 
+										 backgroundAlpha="0" borderAlpha="0" alpha="0.8"
+										 mouseWheel="hpc_StackedColumnChart_mouseWheelHandler(event)"
+										 mouseOver="hpc_StackedColumnChart_mouseOverHandler(event)" 
+										 mouseOut="hpc_StackedColumnChart_mouseOutHandler(event)">
+		</components:stackedColumnChartV4>		
+		
+	</s:BorderContainer>
+		
+</s:Application>

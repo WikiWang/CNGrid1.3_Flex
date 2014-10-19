@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexProperties enableServiceManager="false" flexServerFeatures="4" flexServerType="2" serverContextRoot="/CNGrid1.3" serverRoot="D:/Program Files/Apache/apache-tomcat-7.0.23/webapps/CNGrid1.3" serverRootURL="http://localhost:8080/CNGrid1.3" toolCompile="true" useServerFlexSDK="false" version="2"/>

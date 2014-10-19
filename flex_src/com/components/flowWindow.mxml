@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   width="100%" height="100%" backgroundAlpha="0.6" backgroundColor="#C2E2EE"
+				   contentBackgroundAlpha="0.6" contentBackgroundColor="#FFFFFF">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flash.sampler.NewObjectSample;		
+			import mx.collections.ArrayCollection;
+			
+			[Bindable]
+			public var dp:ArrayCollection = new ArrayCollection();
+			
+			public function f():void
+			{
+				var timer:Timer = new Timer(100);
+				timer.addEventListener(TimerEvent.TIMER,ontime);
+				timer.start();
+			}
+			private function ontime(evt:TimerEvent):void
+			{				
+				job_Data.validateNow();
+				if(job_Data.scroller.verticalScrollBar.value < job_Data.scroller.verticalScrollBar.maximum){
+					job_Data.scroller.verticalScrollBar.value +=  1;
+				}
+				else{
+					job_Data.scroller.verticalScrollBar.value = 0;
+				}
+			}
+			
+			protected function minus_clickHandler(event:MouseEvent):void
+			{
+				this.scaleX -= 0.2; 
+				this.scaleY -= 0.2; 
+			}
+			
+			protected function plus_clickHandler(event:MouseEvent):void
+			{
+				if(this.scaleX<2){
+					this.scaleX += 0.2; 
+					this.scaleY += 0.2; 
+				}			
+			}
+			
+			protected function moreInfor_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				navigateToURL(new URLRequest("http://localhost:8080/CNGrid1.3/CNGrid1.3-debug/JobOnline.html"), "_blank");
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Group>
+		<s:DataGrid id="job_Data" width="260" height="290" borderVisible="false" dataProvider="{dp}"
+					editable="false" enabled="true" fontSize="10" fontWeight="bold"
+					textAlign="left" verticalScrollPolicy="off">
+			<s:columns>
+				<s:ArrayList>
+					<s:GridColumn dataField="User" headerText="用户名" width="45"></s:GridColumn>
+					<s:GridColumn dataField="Hpc" headerText="运行结点" width="55"></s:GridColumn>
+					<s:GridColumn dataField="Core" headerText="核数" width="35"></s:GridColumn>
+					<s:GridColumn dataField="Status" headerText="状态" width="40"></s:GridColumn>
+					<s:GridColumn dataField="updateTime" headerText="更新时间" width="80"></s:GridColumn>
+				</s:ArrayList>
+			</s:columns>
+		</s:DataGrid>
+	</s:Group>		
+	<s:Button id="minus"
+			  width="18" height="18"
+			  right="30" bottom="2"
+			  useHandCursor="true" buttonMode="true"
+			  skinClass="com.skins.minusButton"
+			  click="minus_clickHandler(event)">	
+	</s:Button>
+	<s:Button id="plus"
+			  width="18" height="18"
+			  right="5" bottom="2"
+			  useHandCursor="true" buttonMode="true"
+			  skinClass="com.skins.plusButton"
+			  click="plus_clickHandler(event)">	
+	</s:Button>
+	<mx:LinkButton id="moreInfor" right="50" bottom="0" width="75" height="23" label="更多信息" color="#3A87EF"
+				   focusColor="#70B2EE" fontWeight="bold" rollOverColor="#8ABDEC"
+				   selectionColor="#3A87EF" textDecoration="underline"
+				   click="moreInfor_clickHandler(event)"/>
+</s:BorderContainer>

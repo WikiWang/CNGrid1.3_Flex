@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:amcharts="http://www.amcharts.com/com_internal"
+				   width="340" height="220" backgroundColor="#FFFFFF" backgroundAlpha="0" borderVisible="false">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.amcharts.chartClasses.AmChart;
+			import com.amcharts.chartClasses.AmGraph;
+			import com.classes.Add_HPC_ButtonClick;
+			import com.classes.Add_hpc_StackedColumnChart;
+			import com.classes.HPC;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.utils.ColorUtil;
+			
+			
+			private var hpc_list:ArrayCollection = new ArrayCollection;
+			private var hpc_button_list:ArrayCollection = new ArrayCollection;
+			private var total:HPC;
+			private var graph:AmGraph;
+			private var tempGraph:AmGraph;
+			private var cngrid:Object;
+			private var  timerOfRandom:Timer;
+			private var hpc_button:HPC_Button;
+			[Bindable]
+			public var color_bg:Array = [0x70b2ee];
+			[Bindable]
+			public var color_fg:Array = [0x0884f7];
+			
+			[Bindable]
+			public var radius:int = 0;
+			
+			[Bindable]
+			public var chartFontSize:uint = 10;
+			[Bindable]
+			public var amLegendFontSize:uint = 8;
+			[Bindable]
+			public var labelSize:uint = 12;
+			
+			public function set(hpc_list:ArrayCollection, total:HPC):void
+			{
+				this.hpc_list = hpc_list;
+				this.total = total;
+				var obj0:Object = new Object();
+				var obj1:Object = new Object();
+				var obj2:Object = new Object();
+				var obj3:Object = new Object();
+				var obj4:Object = new Object();
+				obj0.type = "活跃用户\n("+total.activeUser+")";
+				obj1.type = "运行作业\n("+total.runJob+")";
+				obj2.type = "排队作业\n("+total.pendJob+")";
+				obj3.type = "运行核数\n("+total.runCore+")";
+				obj4.type = "排队核数\n("+total.pendCore+")";
+				for each(var hpc:HPC in hpc_list){
+					obj0[hpc.nodeName]=hpc.activeUser;	
+					obj1[hpc.nodeName]=hpc.runJob;
+					obj2[hpc.nodeName]=hpc.pendJob;
+					obj3[hpc.nodeName]=hpc.runCore;
+					obj4[hpc.nodeName]=hpc.pendCore;
+				}
+				if(chartData.length>0){
+					chartData.removeAll();
+				}
+				chartData.addItem(obj0);
+				chartData.addItem(obj1);
+				chartData.addItem(obj2);
+				chartData.addItem(obj3);
+				chartData.addItem(obj4);
+				
+			}
+			
+			public function set_amGraph(hpc_button_list:ArrayCollection, cngrid:Object, timerOfRandom:Timer):void
+			{
+				this.cngrid = cngrid;
+				this.hpc_button_list = hpc_button_list;
+				this.timerOfRandom = timerOfRandom;
+				for(var i:int=0; i<hpc_button_list.length; i++){
+					var graph:AmGraph = new AmGraph();	
+					hpc_button = hpc_button_list.getItemAt(i) as HPC_Button;	
+					graph.valueField=hpc_button_list.getItemAt(i).nodeName;
+					graph.type="column";
+					graph.title = hpc_button_list.getItemAt(i).nodeName;
+					graph.setStyle("fillColors", [0x0884f7]);
+					graph.setStyle("lineAlpha",0);
+					graph.setStyle("fillAlphas",[1]);
+					graph.showAllValueLabels = true;
+					graph.setStyle("fillColors",color_bg);
+					graph.setStyle("cornerRadiusTop",radius);
+					graph.setStyle("cornerRadiusBottom",radius);
+					graph.balloonText=hpc_button_list.getItemAt(i).nodeName+":[[value]]";
+					chart.addGraph(graph);
+				}
+				chart.addEventListener("clickGraphItem",show);
+			}
+			
+			private function show(event):void
+			{
+				var obj:Object = event.item as Object;
+				if(timerOfRandom.running){
+					timerOfRandom.stop();
+				}
+				for each(var hpc_button:HPC_Button in hpc_button_list){
+					if(hpc_button.nodeName == obj.graph.valueField){
+//						Alert.show(obj.graph.valueField);
+						cngrid.shwo_details_click(hpc_button);
+					}
+				}
+				
+			}
+
+			public function set_NodeName( node_Name:String,company_Name:String):void
+			{
+				hpc_label.text = company_Name + " (" + node_Name + ")";
+			}
+			
+			public function set_HightLight(nodeName:String):void
+			{
+				if(tempGraph != null){
+					tempGraph.setStyle("fillColors", [0x70b2ee]);
+					tempGraph.labelText = "";
+				}
+				for(var i:uint = 0; i < chart.graphs.length; i++)
+				{					
+					graph = chart.graphs[i];
+//					Alert.show(name+" " +nodeName);
+					if(graph.valueField == nodeName){												
+//						Alert.show(tempGraph.valueField.toString()+graph.valueField.toString());
+						graph.setStyle("fillColors", [0x0884f7]);
+						graph.labelText = "[[percents]]%";
+						tempGraph=graph;
+						break;
+					}
+										
+				}	
+			}			
+			[Bindable]
+			private var chartData:ArrayCollection = new ArrayCollection();
+
+			
+			protected function minus_clickHandler(event:MouseEvent):void
+			{
+				this.scaleX -= 0.2; 
+				this.scaleY -= 0.2; 
+			}
+			
+			protected function plus_clickHandler(event:MouseEvent):void
+			{
+				if(this.scaleX<2){
+					this.scaleX += 0.2; 
+					this.scaleY += 0.2;
+				}		 
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<amcharts:AmSerialChart 
+		id="chart" x="0" y="10" width="100%" height="90%" angle="0" left="0"
+		autoMargins="true" categoryField="type" columnWidth="0.7"
+		dataProvider="{chartData}" depth3D="0" fontSize="{chartFontSize}" marginBottom="0"
+		marginLeft="0" marginRight="5" marginTop="10"
+		plotAreaFillAlphas="[0]" startDuration="1" textAlign="center"
+		useHandCursor="true">
+		<amcharts:graphs>
+
+		</amcharts:graphs>
+		
+		<amcharts:valueAxes>
+			<amcharts:ValueAxis stackType="100%" gridAlpha="0" axisAlpha="0" labelsEnabled="false" />					
+		</amcharts:valueAxes>
+		
+		<amcharts:categoryAxis>
+			<amcharts:CategoryAxis gridAlpha="0" axisAlpha="1" fontWeight="bold"/>
+		</amcharts:categoryAxis>
+		
+	</amcharts:AmSerialChart>
+	<s:Label id="hpc_label" left="100" bottom="0" width="70%" height="10%" textAlign="left" fontSize="{labelSize}"
+			 verticalAlign="middle"/>
+	<s:Button id="minus"
+			  width="18" height="18"
+			  left="50" bottom="2" 
+			  useHandCursor="true" buttonMode="true"
+			  skinClass="com.skins.minusButton"
+			  click="minus_clickHandler(event)">	
+	</s:Button>
+	<s:Button id="plus"
+			  width="18" height="18"
+			  left="75" bottom="2"
+			  useHandCursor="true" buttonMode="true"
+			  skinClass="com.skins.plusButton"
+			  click="plus_clickHandler(event)">	
+	</s:Button>
+</s:BorderContainer>

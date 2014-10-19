@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   width="12" height="12" borderVisible="false" cornerRadius="20">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			[Bindable]
+			public var button_color:uint;
+			public var nodeName:String;		
+			public var companyName:String;
+			public var picture:String;			
+			public var introductionURL:String;
+			public var runTimeURL:String;
+			public var statisticURL:String;
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:Button width="10" height="10"
+			  cornerRadius="20"
+			  skinClass="com.skins.hpcButton">
+	</s:Button>
+</s:BorderContainer>

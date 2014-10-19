@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<nodes>
+	<node id="a" type="hpc">
+		<nodeName>dicp</nodeName>
+		<name>惠普C7000</name>
+		<companyName>大连分中心</companyName>
+		<xPoint>761</xPoint>
+		<yPoint>284</yPoint>
+		<picture>dicp</picture>
+		<introductionURL>http://www.hao123.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="b" type="hpc">
+		<nodeName>imr</nodeName>
+		<name>曙光TC3600</name>
+		<companyName>沈阳分中心</companyName>
+		<xPoint>778</xPoint>
+		<yPoint>236</yPoint>
+		<picture>imr</picture>
+		<introductionURL>http://www.hao123.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="c" type="hpc">
+		<nodeName>casnw</nodeName>
+		<name>曙光5000</name>
+		<companyName>兰州分中心</companyName>
+		<xPoint>474</xPoint>
+		<yPoint>357</yPoint>
+		<picture>casnw</picture>
+		<introductionURL>http://www.hao123.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="d" type="hpc">
+		<nodeName>deepcomp7000</nodeName>
+		<name>深腾7000</name>
+		<companyName>中科院网络中心</companyName>
+		<xPoint>672</xPoint>
+		<yPoint>281</yPoint>
+		<picture>deepcomp7000</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>	
+	<node id="e" type="hpc">
+		<nodeName>ibp</nodeName>
+		<name>浪潮TS10K</name>
+		<companyName>中科院生物物理研究所</companyName>
+		<xPoint>676</xPoint>
+		<yPoint>271</yPoint>
+		<picture>default</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="f" type="hpc">
+		<nodeName>qdio</nodeName>
+		<name>曙光5000</name>
+		<companyName>青岛分中心</companyName>
+		<xPoint>743</xPoint>
+		<yPoint>348</yPoint>
+		<picture>qdio</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="g" type="hpc">
+		<nodeName>nsccjn</nodeName>
+		<name>神威蓝光</name>
+		<companyName>国家超级计算济南中心</companyName>
+		<xPoint>701</xPoint>
+		<yPoint>343</yPoint>
+		<picture>nsccjn</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="h" type="hpc">
+		<nodeName>nscctj</nodeName>
+		<name>天河一号</name>
+		<companyName>国家超级计算天津中心</companyName>
+		<xPoint>690</xPoint>
+		<yPoint>298</yPoint>
+		<picture>nscctj</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>		
+	<node id="i" type="hpc">
+		<nodeName>hku</nodeName>
+		<name>SRG Gideon-II</name>
+		<companyName>香港大学</companyName>
+		<xPoint>654</xPoint>
+		<yPoint>624</yPoint>
+		<picture>hku</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="j" type="hpc">
+		<nodeName>kib</nodeName>
+		<name>曙光5000</name>
+		<companyName>昆明分中心</companyName>
+		<xPoint>438</xPoint>
+		<yPoint>569</yPoint>
+		<picture>kib</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="k" type="hpc">
+		<nodeName>ihb</nodeName>
+		<name>联想集群</name>
+		<companyName>武汉分中心</companyName>
+		<xPoint>649</xPoint>
+		<yPoint>467</yPoint>
+		<picture>default</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>
+	<node id="l" type="hpc">
+		<nodeName>issp</nodeName>
+		<name>浪潮天梭10000</name>
+		<companyName>合肥分中心</companyName>
+		<xPoint>700</xPoint>
+		<yPoint>438</yPoint>
+		<picture>default</picture>
+		<introductionURL>http://www.baidu.com</introductionURL>
+		<runTimeURL>http://www.baidu.com</runTimeURL>
+		<statisticURL>http://www.baidu.com</statisticURL>
+	</node>	
+	<refreshTime>10</refreshTime>
+	<moreJobInfor>http://www.baidu.com</moreJobInfor>
+</nodes>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   width="667"
+				   initialize="init()">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.classes.HPC;
+			import com.classes.Jobs;
+			
+			import flash.sampler.NewObjectSample;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.formatters.DateFormatter;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var dp:ArrayCollection = new ArrayCollection();
+			
+			public var hpc_list:ArrayCollection;
+			public var jobs_list:ArrayCollection;
+			public var button_list:ArrayCollection;
+			public var total:HPC;
+
+			protected function init():void
+			{				
+				serv.set_hpc();		
+				serv.set_jobs();
+				serv.set_time();
+				serv.addEventListener(ResultEvent.RESULT,sethpc_resultHandler);
+				serv.addEventListener(ResultEvent.RESULT,setjobs_resultHandler);
+				serv.addEventListener(ResultEvent.RESULT,settime_resultHandler);
+			}
+			
+			private function sethpc_resultHandler(event:ResultEvent):void
+			{
+				hpc_list = ArrayCollection(event.result);
+				total = HPC(hpc_list.getItemAt(hpc_list.length-1));
+				hpc_list.removeItemAt(hpc_list.length-1);
+				
+				activeUser.text = "环境活跃用户"+ total.activeUser.toString() +"人";
+				job.text = "环境排队作业数"+ total.pendJob.toString() +"个（核数"+ total.pendCore.toString()+"个），运行作业数"+ total.runJob.toString() +"个（核数"+ total.runCore.toString() +"个）";
+				activeApp.text = "环境活跃集群7个，环境活跃应用服务4项";
+			}
+			
+			private function setjobs_resultHandler(event:ResultEvent):void
+			{
+				jobs_list = ArrayCollection(event.result);
+				if(dp.length>0){
+					dp.removeAll();
+				}
+				for(var i:int=0; i<jobs_list.length; i++){
+					var obj:Object = new Object();
+					
+					obj["User"] = jobs_list.getItemAt(i).user;
+					
+//					if(jobs_list.getItemAt(i).hpc.length>6){
+//						obj["Hpc"] = jobs_list.getItemAt(i).hpc.substr(0,6)+"*";
+//					}else{
+//						obj["Hpc"] = jobs_list.getItemAt(i).hpc;
+//					}
+					obj["Hpc"] = jobs_list.getItemAt(i).hpc;
+					
+					obj["Core"] = jobs_list.getItemAt(i).core;
+					
+					if(jobs_list.getItemAt(i).status == 16){
+						obj["Status"] = "PEND";
+					}else{
+						obj["Status"] = "RUN";
+					}
+					obj["applyName"] = jobs_list.getItemAt(i).app;
+					
+					var timedate:Number=jobs_list.getItemAt(i).submitTime;
+					var thisdate:Date=new Date(timedate*1000);
+					var df:DateFormatter = new DateFormatter();
+					df.formatString = "MM-DD HH:NN";
+					var year:Number=thisdate.fullYear;
+					var month:Number=thisdate.month+1;
+					var day:Number=thisdate.date;
+					var hour:Number=thisdate.hours;
+					var minutes:Number=thisdate.minutes;
+					obj["submitTime"] = df.format(thisdate).toString();
+					
+					var durationTime:Number=jobs_list.getItemAt(i).updateTime - jobs_list.getItemAt(i).submitTime;
+					var days:int = durationTime/(3600*24);
+					var hours:int = (durationTime%(3600*24))/3600;
+					var mins:int = (durationTime%(3600))/60;
+					obj["duration"] = days.toString() + "天" + hours.toString() + "小时" + mins.toString() + "分钟";
+					dp.addItem(obj);
+				}
+			}
+			
+			protected function settime_resultHandler(event:ResultEvent):void
+			{
+				time.text = "更新时间：" + event.result.toString();
+			}			
+			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->	
+		<!-- flex与普通java类的方法通信 -->
+		<s:RemoteObject id="serv" destination="myservice" showBusyCursor="true">
+			<s:method name="set_hpc" result="sethpc_resultHandler(event)"/>
+			<s:method name="set_jobs" result="setjobs_resultHandler(event)"/>	
+			<s:method name="set_time" result="settime_resultHandler(event)"/>	
+		</s:RemoteObject>		
+	</fx:Declarations>
+	
+	<s:VGroup  width="667" top="10" gap="10">
+		<s:Label id="activeUser" fontSize="16" left="0"/>	
+		<s:Label id="job" fontSize="16" left="0"/>
+		<s:Label id="activeApp" fontSize="16" left="0"/>
+		<s:Button id="statisticDiagram" label="查看统计图表" fontSize="16" color="#079DD5"/>
+		<s:DataGrid id="job_details" width="667" height="100%" borderVisible="true" color="#079DD5"
+					contentBackgroundColor="#F2FBFC" dataProvider="{dp}" editable="false"
+					enabled="true" fontFamily="宋体" fontSize="14" textAlign="left" requestedRowCount="20"
+					verticalScrollPolicy="auto">
+			<s:columns>
+				<s:ArrayList>
+					<s:GridColumn dataField="User" headerText="用户名" width="80"></s:GridColumn>
+					<s:GridColumn dataField="Hpc" headerText="运行结点" width="110"></s:GridColumn>
+					<s:GridColumn dataField="Core" headerText="核数" width="60"></s:GridColumn>
+					<s:GridColumn dataField="Status" headerText="状态" width="60"></s:GridColumn>
+					<s:GridColumn dataField="applyName" headerText="应用名" width="100"></s:GridColumn>
+					<s:GridColumn dataField="submitTime" headerText="提交时间" width="105"></s:GridColumn>
+					<s:GridColumn dataField="duration" headerText="状态持续" width="132"></s:GridColumn>
+				</s:ArrayList>
+			</s:columns>
+		</s:DataGrid>
+		<s:Label id="time" fontSize="16" left="0" />	
+	</s:VGroup>		
+	
+</s:Application>
